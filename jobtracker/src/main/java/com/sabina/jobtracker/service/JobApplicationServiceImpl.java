@@ -68,4 +68,22 @@ public class JobApplicationServiceImpl implements JobApplicationService {
         }
         jobApplicationRepository.deleteById(id);
     }
+
+    @Override
+    public List<JobApplication> getJobsByStatus(com.sabina.jobtracker.model.ApplicationStatus status) {
+        return jobApplicationRepository.findByStatus(status);
+    }
+
+    @Override
+    public java.util.Map<com.sabina.jobtracker.model.ApplicationStatus, Long> getJobStatistics() {
+        // Luăm toate joburile din baza de date
+        List<JobApplication> allJobs = jobApplicationRepository.findAll();
+
+        // Le grupăm după status și le numărăm
+        return allJobs.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        JobApplication::getStatus,
+                        java.util.stream.Collectors.counting()
+                ));
+    }
 }

@@ -54,4 +54,21 @@ public class JobApplicationController {
         jobApplicationService.deleteJobApplication(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content este standardul pentru delete
     }
+
+    // Endpoint pentru filtrarea joburilor după status
+    // Exemplu de apelare: GET /api/jobs/filter?status=INTERVIEW
+    @GetMapping("/filter")
+    public ResponseEntity<List<JobApplication>> getJobsByStatus(
+            @RequestParam com.sabina.jobtracker.model.ApplicationStatus status) {
+
+        List<JobApplication> jobs = jobApplicationService.getJobsByStatus(status);
+        return new ResponseEntity<>(jobs, HttpStatus.OK);
+    }
+
+    // Endpoint pentru a vedea statisticile aplicărilor
+    @GetMapping("/statistics")
+    public ResponseEntity<java.util.Map<com.sabina.jobtracker.model.ApplicationStatus, Long>> getJobStatistics() {
+        java.util.Map<com.sabina.jobtracker.model.ApplicationStatus, Long> stats = jobApplicationService.getJobStatistics();
+        return new ResponseEntity<>(stats, HttpStatus.OK);
+    }
 }
