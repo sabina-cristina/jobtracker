@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Job Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; }
+        .login-container { max-width: 400px; margin-top: 10%; }
+    </style>
+</head>
+<body>
+
+<div class="container d-flex justify-content-center">
+    <div class="card p-4 shadow login-container w-100">
+        <h3 class="text-center text-primary fw-bold mb-4">🚀 Job Tracker Login</h3>
+
+        <!-- Mesaj în caz de eroare la autentificare (Spring trimite parametrul ?error în URL) -->
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('error')) {
+                document.write('<div class="alert alert-danger">Email sau parolă incorectă!</div>');
+            }
+        </script>
+
+        <!-- Formularul trimite datele direct către filtrul Spring Security -->
+        <form action="/api/auth/login" method="POST">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required placeholder="nume@exemplu.com">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Parolă</label>
+                <input type="password" class="form-control" id="password" name="password" required placeholder="Parola ta">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Intră în cont</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <span class="text-muted">Nu ai un cont?</span> <a href="/register.html" class="text-decoration-none">Înregistrează-te aici</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

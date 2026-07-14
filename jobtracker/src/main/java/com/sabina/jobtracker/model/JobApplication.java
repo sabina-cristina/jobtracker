@@ -28,6 +28,22 @@ public class JobApplication {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
+    @Lob
+    @Column(name = "cv_file", columnDefinition = "LONGBLOB")
+    @com.fasterxml.jackson.annotation.JsonIgnore // Prevenim trimiterea octeților grei prin JSON de fiecare dată când listăm joburile
+    private byte[] cvFile;
+
+    @Column(name = "cv_file_name")
+    private String cvFileName;
+
+    @Column(name = "cv_content_type")
+    private String cvContentType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private User user;
+
     public JobApplication() {
     }
 
@@ -81,4 +97,41 @@ public class JobApplication {
     public void setCompany(Company company) {
         this.company = company;
     }
+
+    // Getters și Setters pentru gestiunea CV-ului
+
+    public byte[] getCvFile() {
+        return cvFile;
+    }
+
+    public void setCvFile(byte[] cvFile) {
+        this.cvFile = cvFile;
+    }
+
+    public String getCvFileName() {
+        return cvFileName;
+    }
+
+    public void setCvFileName(String cvFileName) {
+        this.cvFileName = cvFileName;
+    }
+
+    public String getCvContentType() {
+        return cvContentType;
+    }
+
+    public void setCvContentType(String cvContentType) {
+        this.cvContentType = cvContentType;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+
+
 }

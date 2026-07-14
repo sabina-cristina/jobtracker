@@ -1,74 +1,91 @@
 package com.sabina.jobtracker.controller;
 
-import com.sabina.jobtracker.dto.JobApplicationRequest;
+import com.sabina.jobtracker.model.Company;
 import com.sabina.jobtracker.model.JobApplication;
-import com.sabina.jobtracker.service.JobApplicationService;
-import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import com.sabina.jobtracker.model.ApplicationStatus; // <--- Importăm enum-ul tău corect
+import com.sabina.jobtracker.model.User;
+import com.sabina.jobtracker.repository.CompanyRepository;
+import com.sabina.jobtracker.repository.JobApplicationRepository;
+import com.sabina.jobtracker.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/jobs")
 public class JobApplicationController {
 
-    private final JobApplicationService jobApplicationService;
+    private final JobApplicationRepository jobRepository;
+    private final CompanyRepository companyRepository;
+    private final UserRepository userRepository;
 
-    public JobApplicationController(JobApplicationService jobApplicationService) {
-        this.jobApplicationService = jobApplicationService;
+    public JobApplicationController(JobApplicationRepository jobRepository,
+                                    CompanyRepository companyRepository,
+                                    UserRepository userRepository) {
+        this.jobRepository = jobRepository;
+        this.companyRepository = companyRepository;
+        this.userRepository = userRepository;
     }
 
+    private User getLoggedInUser(Principal principal) {
+        return userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Utilizatorul curent nu a fost găsit."));
+    }
+
+    // 1. SALVARE JOB NOU
     @PostMapping
-    public ResponseEntity<JobApplication> createJob(@Valid @RequestBody JobApplicationRequest request) {
-        JobApplication savedJob = jobApplicationService.createJobApplication(request);
-        return new ResponseEntity<>(savedJob, HttpStatus.CREATED);
+    public ResponseEntity<JobApplication> createJob(@RequestBody Map<String, Object> payload, Principal principal) {
+        User currentUser = getLoggedInUser(principal);
+
+        String jobTitle = (String) payload.get("jobTitle");
+        // Folosim ApplicationStatus în loc de JobStatus
+        ApplicationStatus status = ApplicationStatus.valueOf((String) payload.get("status"));
+        String jobDescriptionUrl = (String) payload.get("jobDescriptionUrl");
+        Long companyId = Long.valueOf(payload.get("companyId").toString());
+
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new RuntimeException("Compania nu a fost găsită."));
+
+        JobApplication job = new JobApplication();
+        job.setJobTitle(jobTitle);
+        job.setStatus(status);
+        job.setJobDescriptionUrl(jobDescriptionUrl);
+        job.setCompany(company);
+        job.setAppliedAt(LocalDate.now());
+        job.setUser(currentUser);
+
+        JobApplication savedJob = jobRepository.save(job);
+        return ResponseEntity.ok(savedJob);
     }
 
-    @GetMapping
-    public ResponseEntity<List<JobApplication>> getAllJobs() {
-        List<JobApplication> jobs = jobApplicationService.getAllJobApplications();
-        return new ResponseEntity<>(jobs, HttpStatus.OK);
-    }
-
-    // Endpoint pentru actualizarea statusului (folosim PATCH pentru actualizări parțiale)
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<JobApplication> updateStatus(
-            @PathVariable Long id,
-            @RequestParam com.sabina.jobtracker.model.ApplicationStatus status) {
-
-        JobApplication updatedJob = jobApplicationService.updateJobStatus(id, status);
-        return new ResponseEntity<>(updatedJob, HttpStatus.OK);
-    }
-
-    // Endpoint pentru a vedea toate joburile de la o companie specifică
-    @GetMapping("/company/{companyId}")
-    public ResponseEntity<List<JobApplication>> getJobsByCompany(@PathVariable Long companyId) {
-        List<JobApplication> jobs = jobApplicationService.getJobsByCompany(companyId);
-        return new ResponseEntity<>(jobs, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
-        jobApplicationService.deleteJobApplication(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content este standardul pentru delete
-    }
-
-    // Endpoint pentru filtrarea joburilor după status
-    // Exemplu de apelare: GET /api/jobs/filter?status=INTERVIEW
-    @GetMapping("/filter")
-    public ResponseEntity<List<JobApplication>> getJobsByStatus(
-            @RequestParam com.sabina.jobtracker.model.ApplicationStatus status) {
-
-        List<JobApplication> jobs = jobApplicationService.getJobsByStatus(status);
-        return new ResponseEntity<>(jobs, HttpStatus.OK);
-    }
-
-    // Endpoint pentru a vedea statisticile aplicărilor
+    // 2. STATISTICI
     @GetMapping("/statistics")
-    public ResponseEntity<java.util.Map<com.sabina.jobtracker.model.ApplicationStatus, Long>> getJobStatistics() {
-        java.util.Map<com.sabina.jobtracker.model.ApplicationStatus, Long> stats = jobApplicationService.getJobStatistics();
-        return new ResponseEntity<>(stats, HttpStatus.OK);
+    public ResponseEntity<Map<ApplicationStatus, Long>> getStatistics(Principal principal) {
+        User currentUser = getLoggedInUser(principal);
+        List<JobApplication> userJobs = jobRepository.findByUser(currentUser);
+
+        Map<ApplicationStatus, Long> stats = new HashMap<>();
+        for (ApplicationStatus status : ApplicationStatus.values()) {
+            stats.put(status, 0L);
+        }
+
+        for (JobApplication job : userJobs) {
+            stats.put(job.getStatus(), stats.get(job.getStatus()) + 1);
+        }
+
+        return ResponseEntity.ok(stats);
+    }
+
+    // 3. FILTRARE JOBURI
+    @GetMapping("/filter")
+    public ResponseEntity<List<JobApplication>> getJobsByStatus(@RequestParam ApplicationStatus status, Principal principal) {
+        User currentUser = getLoggedInUser(principal);
+        List<JobApplication> jobs = jobRepository.findByUserAndStatus(currentUser, status);
+        return ResponseEntity.ok(jobs);
     }
 }
