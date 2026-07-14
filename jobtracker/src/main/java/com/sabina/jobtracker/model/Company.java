@@ -1,7 +1,6 @@
 package com.sabina.jobtracker.model;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
 
 @Entity
@@ -18,9 +17,16 @@ public class Company {
 
     private String website;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDate createdAt;
 
     public Company() {
+    }
+
+    // Această metodă setează automat data curentă înainte de salvarea în DB
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDate.now();
     }
 
     public Long getId() {
@@ -55,7 +61,5 @@ public class Company {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDate createdAt) {
-        this.createdAt = createdAt;
-    }
+    // Am șters setCreatedAt pentru că este gestionat automat de @PrePersist
 }

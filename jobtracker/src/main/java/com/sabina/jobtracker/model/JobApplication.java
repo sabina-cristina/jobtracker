@@ -1,0 +1,84 @@
+package com.sabina.jobtracker.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "job_applications")
+public class JobApplication {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String jobTitle;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ApplicationStatus status;
+
+    private String jobDescriptionUrl;
+
+    @Column(name = "applied_at")
+    private LocalDate appliedAt;
+
+    // Multe joburi aparțin de o singură companie
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "company_id", nullable = false)
+    private Company company;
+
+    public JobApplication() {
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.appliedAt == null) {
+            this.appliedAt = LocalDate.now();
+        }
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
+    public void setJobTitle(String jobTitle) {
+        this.jobTitle = jobTitle;
+    }
+
+    public ApplicationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ApplicationStatus status) {
+        this.status = status;
+    }
+
+    public String getJobDescriptionUrl() {
+        return jobDescriptionUrl;
+    }
+
+    public void setJobDescriptionUrl(String jobDescriptionUrl) {
+        this.jobDescriptionUrl = jobDescriptionUrl;
+    }
+
+    public LocalDate getAppliedAt() {
+        return appliedAt;
+    }
+
+    public void setAppliedAt(LocalDate appliedAt) {
+        this.appliedAt = appliedAt;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
+    }
+}
