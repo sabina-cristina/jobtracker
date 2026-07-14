@@ -42,4 +42,30 @@ public class JobApplicationServiceImpl implements JobApplicationService {
     public List<JobApplication> getAllJobApplications() {
         return jobApplicationRepository.findAll();
     }
+
+    @Override
+    public JobApplication updateJobStatus(Long jobId, com.sabina.jobtracker.model.ApplicationStatus newStatus) {
+        // Găsim jobul sau aruncăm eroare
+        JobApplication job = jobApplicationRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("Job not found with id: " + jobId));
+
+        // Actualizăm statusul
+        job.setStatus(newStatus);
+
+        // Salvăm modificarea
+        return jobApplicationRepository.save(job);
+    }
+
+    @Override
+    public List<JobApplication> getJobsByCompany(Long companyId) {
+        return jobApplicationRepository.findByCompanyId(companyId);
+    }
+
+    @Override
+    public void deleteJobApplication(Long id) {
+        if (!jobApplicationRepository.existsById(id)) {
+            throw new RuntimeException("Job not found with id: " + id);
+        }
+        jobApplicationRepository.deleteById(id);
+    }
 }

@@ -31,4 +31,27 @@ public class JobApplicationController {
         List<JobApplication> jobs = jobApplicationService.getAllJobApplications();
         return new ResponseEntity<>(jobs, HttpStatus.OK);
     }
+
+    // Endpoint pentru actualizarea statusului (folosim PATCH pentru actualizări parțiale)
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<JobApplication> updateStatus(
+            @PathVariable Long id,
+            @RequestParam com.sabina.jobtracker.model.ApplicationStatus status) {
+
+        JobApplication updatedJob = jobApplicationService.updateJobStatus(id, status);
+        return new ResponseEntity<>(updatedJob, HttpStatus.OK);
+    }
+
+    // Endpoint pentru a vedea toate joburile de la o companie specifică
+    @GetMapping("/company/{companyId}")
+    public ResponseEntity<List<JobApplication>> getJobsByCompany(@PathVariable Long companyId) {
+        List<JobApplication> jobs = jobApplicationService.getJobsByCompany(companyId);
+        return new ResponseEntity<>(jobs, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
+        jobApplicationService.deleteJobApplication(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content este standardul pentru delete
+    }
 }
